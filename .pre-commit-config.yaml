@@ -4,7 +4,7 @@ exclude: |
     )$
 repos:
 -   repo: https://github.com/trinitronx/checkmake.git
-    rev: 0.2.4
+    rev: 0.2.5
     hooks:
     - id: checkmake
       exclude: |
