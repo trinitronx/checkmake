@@ -93,6 +93,7 @@ on:
       - 'makefile'
       - 'GNUmakefile'
       - '**.mk'
+      - '**.make'
   push:
     paths:
       - '.pre-commit-config.yaml'
@@ -101,6 +102,7 @@ on:
       - 'makefile'
       - 'GNUmakefile'
       - '**.mk'
+      - '**.make'
 
 jobs:
   pre-commit:
