@@ -11,8 +11,8 @@ import (
 func TestVersionIsNotSimplyExpanded(t *testing.T) {
 
 	makefile := parser.Makefile{
-		FileName:  "timestamp-expanded.mk",
-		Variables: []parser.Variable{parser.Variable{
+		FileName: "timestamp-expanded.mk",
+		Variables: []parser.Variable{{
 			Name:           "BUILDTIME",
 			Assignment:     "$(shell date -u +\"%Y-%m-%dT%H:%M:%SZ\")",
 			SimplyExpanded: false}},
@@ -33,8 +33,8 @@ func TestVersionIsNotSimplyExpanded(t *testing.T) {
 func TestVersionIsSimplyExpanded(t *testing.T) {
 
 	makefile := parser.Makefile{
-		FileName:  "timestamp-simply-expanded.mk",
-		Variables: []parser.Variable{parser.Variable{
+		FileName: "timestamp-simply-expanded.mk",
+		Variables: []parser.Variable{{
 			Name:           "BUILDTIME",
 			Assignment:     "$(shell date -u +\"%Y-%m-%dT%H:%M:%SZ\")",
 			SimplyExpanded: true}},
