@@ -16,7 +16,6 @@ package variabletrailingwhitespace
 
 import (
 	"fmt"
-	"regexp"
 
 	//"strings"
 
@@ -33,8 +32,7 @@ type Variabletrailingwhitespace struct {
 }
 
 var (
-	vT                         = "Variable %q possibly contains unintended trailing whitespace and the comment should placed on the line above."
-	whitespaceCommentRegexp, _ = regexp.Compile(`\s+#.*$`)
+	vT = "Variable %q possibly contains unintended trailing whitespace and the comment should placed on the line above."
 )
 
 // Name returns the name of the rule
@@ -52,7 +50,7 @@ func (r *Variabletrailingwhitespace) Run(makefile parser.Makefile, config rules.
 	ret := rules.RuleViolationList{}
 
 	for _, variable := range makefile.Variables {
-		if whitespaceCommentRegexp.MatchString(variable.Assignment) &&
+		if len(variable.Comment) != 0 &&
 			!variable.SpecialVariable {
 			ret = append(ret, rules.RuleViolation{
 				Rule:       r.Name(),
