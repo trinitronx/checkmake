@@ -10,5 +10,6 @@ repos:
       exclude: |
         (?x)^(
           vendor/.*|
-          fixtures/missing_phony\.make
+          fixtures/missing_phony\.make|
+          fixtures/special_targets\.make
         )$
