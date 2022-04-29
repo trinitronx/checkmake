@@ -4,7 +4,6 @@ package phonydeclared
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/mrtazz/checkmake/parser"
 	"github.com/mrtazz/checkmake/rules"
@@ -34,11 +33,14 @@ func (r *Phonydeclared) Run(makefile parser.Makefile, config rules.RuleConfig) r
 
 	ruleIndex := make(map[string]bool)
 
-	for _, variable := range makefile.Variables {
-		if variable.Name == "PHONY" {
-			for _, phony := range strings.Split(variable.Assignment, " ") {
+	for _, targetRule := range makefile.Rules {
+		if targetRule.Target == ".PHONY" {
+			for _, phony := range targetRule.Dependencies {
 				ruleIndex[phony] = true
 			}
+		}
+		if targetRule.SpecialTarget {
+			ruleIndex[targetRule.Target] = true
 		}
 	}
 

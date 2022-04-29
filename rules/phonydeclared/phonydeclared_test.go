@@ -12,12 +12,21 @@ func TestAllTargetsArePhony(t *testing.T) {
 
 	makefile := parser.Makefile{
 		FileName:  "phony-declared-all-phony.mk",
-		Variables: []parser.Variable{parser.Variable{
-			Name:       "PHONY",
-			Assignment: "all clean"}},
-		Rules: []parser.Rule{parser.Rule{
-			Target: "all"}, parser.Rule{Target: "clean"},
-		}}
+		Variables: []parser.Variable{{}},
+		Rules: []parser.Rule{
+			{Target: "all"},
+			{Target: "clean"},
+			{
+				Target:        ".PHONY",
+				Dependencies:  []string{"all", "clean"},
+				Comment:       "",
+				SpecialTarget: true,
+				Body:          []string{},
+				FileName:      "phony-declared-missing-one-phony.mk",
+				LineNumber:    -1,
+			},
+		},
+	}
 
 	rule := Phonydeclared{}
 
@@ -31,11 +40,19 @@ func TestMissingOnePhonyTarget(t *testing.T) {
 
 	makefile := parser.Makefile{
 		FileName:  "phony-declared-missing-one-phony.mk",
-		Variables: []parser.Variable{parser.Variable{
-			Name:       "PHONY",
-			Assignment: "all"}},
-		Rules: []parser.Rule{parser.Rule{
-			Target: "all"}, parser.Rule{Target: "clean"},
+		Variables: []parser.Variable{{}},
+		Rules: []parser.Rule{
+			{Target: "all"},
+			{Target: "clean"},
+			{
+				Target:        ".PHONY",
+				Dependencies:  []string{"all"},
+				Comment:       "",
+				SpecialTarget: true,
+				Body:          []string{},
+				FileName:      "phony-declared-missing-one-phony.mk",
+				LineNumber:    -1,
+			},
 		}}
 
 	rule := Phonydeclared{}
