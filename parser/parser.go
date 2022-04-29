@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+
 	"github.com/mrtazz/checkmake/logger"
 )
 
@@ -22,11 +23,13 @@ type Makefile struct {
 
 // Rule represents a Make rule
 type Rule struct {
-	Target       string
-	Dependencies []string
-	Body         []string
-	FileName     string
-	LineNumber   int
+	Target        string
+	Dependencies  []string
+	Comment       string
+	SpecialTarget bool
+	Body          []string
+	FileName      string
+	LineNumber    int
 }
 
 // RuleList represents a list of rules
@@ -37,6 +40,7 @@ type Variable struct {
 	Name            string
 	SimplyExpanded  bool
 	Assignment      string
+	Comment         string
 	SpecialVariable bool
 	FileName        string
 	LineNumber      int
@@ -46,12 +50,40 @@ type Variable struct {
 type VariableList []Variable
 
 var (
-	reFindRule             = regexp.MustCompile("^([a-zA-Z]+):(.*)")
-	reFindRuleBody         = regexp.MustCompile("^\t+(.*)")
-	reFindSimpleVariable   = regexp.MustCompile("^([a-zA-Z]+) ?:=(.*)")
-	reFindExpandedVariable = regexp.MustCompile("^([a-zA-Z]+) ?=(.*)")
-	reFindSpecialVariable  = regexp.MustCompile("^\\.([a-zA-Z_]+):(.*)")
+	reFindRule             = regexp.MustCompile(`^([a-zA-Z]+):(.*?)(#.*)?$`)
+	reFindRuleBody         = regexp.MustCompile(`^\t+(.*)`)
+	reFindSimpleVariable   = regexp.MustCompile(`^([^:#=\n]+)\s*:=(.*?)(#.*)?$`)
+	reFindExpandedVariable = regexp.MustCompile(`^([^:#=\n]+)\s*[?+]{0,1}=\s*(.*?)(#.*)?$`)
+	reFindSpecialTarget    = regexp.MustCompile(`^(\.[a-zA-Z_]+):(.*?)(#.*)?$`)
 )
+
+// filterWhitespaceMatches is an internal helper function to filter out
+// whitespace from an indexed Regexp matches slice
+// Returns a slice of strings split on spaces found in the Nth Regexp capture
+// group where N = index passed
+func filterWhitespaceMatches(matches []string, index int) (ret []string) {
+	splitMatches := strings.Split(matches[index], " ")
+	filteredMatches := make([]string, 0, cap(splitMatches))
+
+	for idx := range splitMatches {
+		item := strings.TrimSpace(splitMatches[idx])
+		if item != "" {
+			filteredMatches = append(filteredMatches, item)
+		}
+	}
+	return filteredMatches
+}
+
+// MustParse is a helper function that wraps Parse()
+// It simply runs Parse() with given args, raises a runtime panic if found,
+// or continues and returns the Makefile struct if success.
+func MustParse(filepath string) (ret Makefile) {
+	ret, err := Parse(filepath)
+	if err != nil {
+		panic(err)
+	}
+	return ret
+}
 
 // Parse is the main function to parse a Makefile from a file path string to a
 // Makefile struct. This function should be kept fairly small and ideally most
@@ -72,14 +104,17 @@ func Parse(filepath string) (ret Makefile, err error) {
 			// parse comments here, ignoring them for now
 			scanner.Scan()
 		case strings.HasPrefix(scanner.Text(), "."):
-			if matches := reFindSpecialVariable.FindStringSubmatch(scanner.Text()); matches != nil {
-				specialVar := Variable{
-					Name:            strings.TrimSpace(matches[1]),
-					Assignment:      strings.TrimSpace(matches[2]),
-					SpecialVariable: true,
-					FileName:        filepath,
-					LineNumber:      scanner.LineNumber}
-				ret.Variables = append(ret.Variables, specialVar)
+			if matches := reFindSpecialTarget.FindStringSubmatch(scanner.Text()); matches != nil {
+				specialTarget := Rule{
+					Target:        strings.TrimSpace(matches[1]),
+					Dependencies:  filterWhitespaceMatches(matches, 2),
+					Comment:       matches[3],
+					SpecialTarget: true,
+					Body:          []string{},
+					FileName:      filepath,
+					LineNumber:    scanner.LineNumber}
+				logger.Debug(fmt.Sprintf("Found SpecialTarget %+v", specialTarget))
+				ret.Rules = append(ret.Rules, specialTarget)
 			}
 			scanner.Scan()
 		default:
@@ -94,12 +129,16 @@ func Parse(filepath string) (ret Makefile, err error) {
 				rule, found := ruleOrVariable.(Rule)
 				if found != true {
 					return ret, errors.New("Parse error")
+				} else {
+					logger.Debug(fmt.Sprintf("Found Rule %+v", rule))
 				}
 				ret.Rules = append(ret.Rules, rule)
 			case Variable:
 				variable, found := ruleOrVariable.(Variable)
 				if found != true {
 					return ret, errors.New("Parse error")
+				} else {
+					logger.Debug(fmt.Sprintf("Found Variable %+v", variable))
 				}
 				ret.Variables = append(ret.Variables, variable)
 			}
@@ -139,25 +178,24 @@ func parseRuleOrVariable(scanner *MakefileScanner) (ret interface{}, err error) 
 			bodyMatches = reFindRuleBody.FindStringSubmatch(scanner.Text())
 		}
 		// trim whitespace from all dependencies
-		deps := strings.Split(matches[2], " ")
-		filteredDeps := make([]string, 0, cap(deps))
+		filteredDeps := filterWhitespaceMatches(matches, 2)
 
-		for idx := range deps {
-			item := strings.TrimSpace(deps[idx])
-			if item != "" {
-				filteredDeps = append(filteredDeps, item)
-			}
-		}
+		// Pass any comments through to the Rule or Variable struct
+		commentMatches := matches[3]
+
 		ret = Rule{
-			Target:       strings.TrimSpace(matches[1]),
-			Dependencies: filteredDeps,
-			Body:         ruleBody,
-			FileName:     scanner.FileHandle.Name(),
-			LineNumber:   beginLineNumber}
+			Target:        strings.TrimSpace(matches[1]),
+			Dependencies:  filteredDeps,
+			Comment:       commentMatches,
+			SpecialTarget: false,
+			Body:          ruleBody,
+			FileName:      scanner.FileHandle.Name(),
+			LineNumber:    beginLineNumber}
 	} else if matches := reFindSimpleVariable.FindStringSubmatch(line); matches != nil {
 		ret = Variable{
 			Name:           strings.TrimSpace(matches[1]),
 			Assignment:     strings.TrimSpace(matches[2]),
+			Comment:        matches[3],
 			SimplyExpanded: true,
 			FileName:       scanner.FileHandle.Name(),
 			LineNumber:     scanner.LineNumber}
@@ -166,6 +204,7 @@ func parseRuleOrVariable(scanner *MakefileScanner) (ret interface{}, err error) 
 		ret = Variable{
 			Name:           strings.TrimSpace(matches[1]),
 			Assignment:     strings.TrimSpace(matches[2]),
+			Comment:        matches[3],
 			SimplyExpanded: false,
 			FileName:       scanner.FileHandle.Name(),
 			LineNumber:     scanner.LineNumber}
