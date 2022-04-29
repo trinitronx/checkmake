@@ -11,5 +11,6 @@ repos:
         (?x)^(
           vendor/.*|
           fixtures/missing_phony\.make|
-          fixtures/special_targets\.make
+          fixtures/special_targets\.make|
+          fixtures/trailing_whitespace\.make
         )$
