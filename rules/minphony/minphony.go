@@ -4,7 +4,6 @@ package minphony
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/mrtazz/checkmake/parser"
 	"github.com/mrtazz/checkmake/rules"
@@ -43,10 +42,10 @@ func (r *MinPhony) Run(makefile parser.Makefile, _ rules.RuleConfig) rules.RuleV
 
 	ruleIndex := make(map[string]bool)
 	ruleLineNumber := 0
-	for _, variable := range makefile.Variables {
-		if variable.Name == "PHONY" {
-			ruleLineNumber = variable.LineNumber - 1
-			for _, phony := range strings.Split(variable.Assignment, " ") {
+	for _, rule := range makefile.Rules {
+		if rule.Target == ".PHONY" {
+			ruleLineNumber = rule.LineNumber - 1
+			for _, phony := range rule.Dependencies {
 				ruleIndex[phony] = true
 			}
 		}

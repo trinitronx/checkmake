@@ -18,28 +18,34 @@ var mpRunTests = []struct {
 			Rules: parser.RuleList{
 				{Target: "green-eggs"},
 				{Target: "ham"},
-			},
-			Variables: parser.VariableList{
-				{Name: "PHONY", Assignment: "green-eggs ham"},
+				{
+					Target:        ".PHONY",
+					Dependencies:  []string{"green-eggs", "ham"},
+					Comment:       "",
+					SpecialTarget: true,
+					Body:          []string{},
+					FileName:      "",
+					LineNumber:    0,
+				},
 			},
 		},
 		vl: rules.RuleViolationList{
 			rules.RuleViolation{
 				Rule:       "minphony",
 				Violation:  "Missing required phony target \"kleen\"",
-				FileName: "green-eggs.mk",
+				FileName:   "green-eggs.mk",
 				LineNumber: -1,
 			},
 			rules.RuleViolation{
 				Rule:       "minphony",
 				Violation:  "Missing required phony target \"awl\"",
-				FileName: "green-eggs.mk",
+				FileName:   "green-eggs.mk",
 				LineNumber: -1,
 			},
 			rules.RuleViolation{
 				Rule:       "minphony",
 				Violation:  "Missing required phony target \"toast\"",
-				FileName: "green-eggs.mk",
+				FileName:   "green-eggs.mk",
 				LineNumber: -1,
 			},
 		},
@@ -51,9 +57,15 @@ var mpRunTests = []struct {
 				{Target: "awl"},
 				{Target: "distkleen"},
 				{Target: "kleen"},
-			},
-			Variables: parser.VariableList{
-				{Name: "PHONY", Assignment: "awl kleen distkleen"},
+				{
+					Target:        ".PHONY",
+					Dependencies:  []string{"awl", "kleen", "distkleen"},
+					Comment:       "",
+					SpecialTarget: true,
+					Body:          []string{},
+					FileName:      "",
+					LineNumber:    0,
+				},
 			},
 		},
 		vl: rules.RuleViolationList{
