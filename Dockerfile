@@ -1,4 +1,4 @@
-FROM golang:1.13 as builder
+FROM golang:1.24 AS builder
 
 ARG BUILDER_NAME
 ARG BUILDER_EMAIL
