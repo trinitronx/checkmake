@@ -129,10 +129,10 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-python@v3
-    - name: Set up Go 1.17
-      uses: actions/setup-go@v2
+    - name: Set up Go 1.24
+      uses: actions/setup-go@v5
       with:
-        go-version: 1.17
+        go-version: 1.24
       id: go
     - uses: pre-commit/action@v2.0.3
 ```
@@ -144,7 +144,7 @@ The [pandoc](https://pandoc.org/) document converter utility is required to run 
 
 ## With Go
 
-With `go` 1.16 or higher:
+With `go` 1.24 or higher:
 
 ```sh
 go install github.com/mrtazz/checkmake/cmd/checkmake@latest
